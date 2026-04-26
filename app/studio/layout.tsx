@@ -1,38 +1,33 @@
-import type { ReactNode } from "react"
+import type { ReactNode } from "react";
 
-import { AppSidebar } from "@/components/app-sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/app-sidebar";
+import { StudioBreadcrumbs } from "@/components/studio-breadcrumbs";
+import { Separator } from "@/components/ui/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function StudioLayout({ children }: { children: ReactNode }) {
   return (
-    <SidebarProvider>
+    <SidebarProvider className="h-dvh max-h-dvh min-h-0 overflow-hidden">
       <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
+      <SidebarInset className="min-h-0 flex-1 overflow-hidden">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background">
+          <div className="flex min-w-0 flex-1 items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1 shrink-0" />
             <Separator
               orientation="vertical"
-              className="mr-2 data-vertical:h-4 data-vertical:self-auto"
+              className="h-4 shrink-0 data-[orientation=vertical]:h-4"
             />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Write Better. Grow Faster.</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
+            <StudioBreadcrumbs />
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-6 md:py-8">
+              {children}
+            </div>
+          </div>
+        </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

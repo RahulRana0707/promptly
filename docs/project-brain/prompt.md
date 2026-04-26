@@ -7,16 +7,16 @@ This file is the source of truth for prompt-related code in this repository: whe
 Counting prompt strings/templates that are actually sent to Gemini, plus reusable prompt fragments:
 
 - `26` executable Gemini prompts (system/user/repair prompts across features)
-- `4` reusable prompt-fragment constants (`miko-rules` + `x-rules`)
+- `4` reusable prompt-fragment constants (`studio-voice` + `x-rules`)
 - `10` article image preset templates (used for external image tools, not Gemini)
 
 ## Global Prompt Building Blocks
 
-### `lib/prompts/miko-rules.ts`
+### `lib/prompts/studio-voice.ts`
 
-- `MIKO_SIGNAL_PHILOSOPHY`
-- `MIKO_CONTENT_GUARDRAILS`
-- `COMBINED_MIKO_BLOG_PREAMBLE`
+- `STUDIO_SIGNAL_PHILOSOPHY`
+- `STUDIO_CONTENT_GUARDRAILS`
+- `STUDIO_VOICE_PREAMBLE`
 
 Role: shared voice and signal-optimization guardrails reused by most prompt builders.
 

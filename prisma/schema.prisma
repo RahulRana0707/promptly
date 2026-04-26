@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// One row per user; `data` is JSON matching `CreatorProfile` (see lib/types/profile.ts).
+model Profile {
+  userId    String   @id
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
+/// One row per user per calendar day; `data` is JSON matching DailyPlanResult.
+model DailyPlanDay {
+  id        String   @id @default(cuid())
+  userId    String
+  planDate  DateTime @db.Date
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, planDate])
+  @@index([userId, planDate(sort: Desc)])
+}
+
+/// Saved X Article drafts; `data` matches SavedArticleData (see lib/types/saved-article.ts).
+model Article {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, updatedAt(sort: Desc)])
+}

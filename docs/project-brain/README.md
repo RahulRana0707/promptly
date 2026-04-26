@@ -56,9 +56,9 @@ The high-level flow is:
 Important connections:
 
 - Studio layout preloads profile into SWR fallback (`app/(studio)/layout.tsx` + `components/studio-swr-provider.tsx`)
-- Most generators merge incoming partial profile with `defaultMikoProfile()`
+- Most generators merge incoming partial profile with `defaultCreatorProfile()`
 - Prompt guardrails are reused from:
-  - `lib/prompts/miko-rules.ts`
+  - `lib/prompts/studio-voice.ts`
   - `lib/prompts/x-rules.ts`
 - API routes perform AI generation; hooks/components orchestrate UX and call those endpoints
 
