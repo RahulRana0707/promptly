@@ -43,7 +43,7 @@ This file maps all app routes, what each page renders, and which features they t
 - File: `app/(studio)/studio/profile/page.tsx`
 - Main render: profile editor (`app/profile/profile-client.tsx`)
 - Core feature: define creator voice, audience, niche, constraints
-- API used: `/api/profile`, `/api/profile/analyze`
+- API used: `/api/profile`, `/api/profile/analyze`, `/api/profile/suggest`
 - Notes: profile is foundational context for all generators
 
 ### `/studio/quote-repost`
