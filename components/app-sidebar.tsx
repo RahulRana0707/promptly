@@ -18,6 +18,7 @@ import {
 import {
   BookTextIcon,
   CalendarDaysIcon,
+  ClapperboardIcon,
   PenSquareIcon,
   QuoteIcon,
   Settings2Icon,
@@ -64,6 +65,21 @@ const data = {
         {
           title: "Create New",
           url: "/studio/articles/new",
+        },
+      ],
+    },
+    {
+      title: "Shorts",
+      url: "/studio/shorts",
+      icon: <ClapperboardIcon />,
+      items: [
+        {
+          title: "All Projects",
+          url: "/studio/shorts",
+        },
+        {
+          title: "Create New",
+          url: "/studio/shorts/new",
         },
       ],
     },

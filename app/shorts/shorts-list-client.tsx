@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/card";
 
 type Props = {
-  initialArticles: Array<{
+  initialProjects: Array<{
     id: string;
     title: string;
+    status: string;
     updatedAt: string;
   }>;
   initialError?: string | null;
@@ -26,7 +27,7 @@ function formatUpdatedAt(input: string): string {
   return date.toISOString().replace("T", " ").replace(".000Z", " UTC");
 }
 
-export function ArticlesListClient({ initialArticles, initialError }: Props) {
+export function ShortsListClient({ initialProjects, initialError }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -34,20 +35,20 @@ export function ArticlesListClient({ initialArticles, initialError }: Props) {
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Studio
           </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Articles</h1>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Shorts</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Draft long-form X articles with card, body, and image prompts.
+            Convert podcasts and long videos into short-form clips.
           </p>
         </div>
         <Button asChild>
-          <Link href="/studio/articles/new">New article</Link>
+          <Link href="/studio/shorts/new">New shorts project</Link>
         </Button>
       </div>
 
       {initialError ? (
         <Card>
           <CardHeader>
-            <CardTitle>Could not load articles</CardTitle>
+            <CardTitle>Could not load shorts projects</CardTitle>
             <CardDescription>{initialError}</CardDescription>
           </CardHeader>
         </Card>
@@ -55,28 +56,35 @@ export function ArticlesListClient({ initialArticles, initialError }: Props) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Saved articles</CardTitle>
+          <CardTitle>Saved projects</CardTitle>
           <CardDescription>
-            {initialArticles.length} saved article{initialArticles.length === 1 ? "" : "s"}.
+            {initialProjects.length} saved project{initialProjects.length === 1 ? "" : "s"}.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
-          {initialArticles.length ? (
-            initialArticles.map((article) => (
+          {initialProjects.length ? (
+            initialProjects.map((project) => (
               <Link
-                key={article.id}
-                href={`/studio/articles/${article.id}`}
+                key={project.id}
+                href={`/studio/shorts/${project.id}`}
                 className="block rounded-lg border border-border/70 p-3 transition-colors hover:bg-muted/40"
               >
-                <p className="font-medium">{article.title || "Untitled article"}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-medium">
+                    {project.title || "Untitled shorts project"}
+                  </p>
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {project.status}
+                  </span>
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Updated {formatUpdatedAt(article.updatedAt)}
+                  Updated {formatUpdatedAt(project.updatedAt)}
                 </p>
               </Link>
             ))
           ) : (
             <p className="text-sm text-muted-foreground">
-              No saved articles yet. Create your first one.
+              No shorts projects yet. Create your first one.
             </p>
           )}
         </CardContent>

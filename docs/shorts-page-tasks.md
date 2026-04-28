@@ -96,15 +96,15 @@ Conventions: `[ ]` todo · `[-]` doing · `[x]` done · Route family: `/studio/s
 
 ## Phase 6 - Studio pages and wizard UI
 
-- [ ] **6.1** Build list page + list client
+- [x] **6.1** Build list page + list client
   - **Do:** implement `/studio/shorts` SSR list with create CTA.
   - **Verify:** empty state and recent project list both render correctly.
 
-- [ ] **6.2** Build new/edit journey wrappers
+- [x] **6.2** Build new/edit journey wrappers
   - **Do:** implement `/studio/shorts/new` and `/studio/shorts/[id]/edit` around shared journey client.
   - **Verify:** shared UI works for both create and edit mode.
 
-- [ ] **6.3** Build detail page
+- [x] **6.3** Build detail page
   - **Do:** implement `/studio/shorts/[id]` with transcript preview, candidates, and render results.
   - **Verify:** deep-linking to project detail works from list and save flow.
 
@@ -179,3 +179,6 @@ Conventions: `[ ]` todo · `[-]` doing · `[x]` done · Route family: `/studio/s
 - `2026-04-28 | ShortsPage | 5.1 | DONE | Added lib/fetch/shorts.ts with typed wrappers for shorts CRUD, transcribe, analyze, render, status, and download endpoints.`
 - `2026-04-28 | ShortsPage | 5.2 | DONE | Added hooks/use-shorts-page.ts to centralize shorts journey state and async action lifecycle handlers.`
 - `2026-04-28 | ShortsPage | 5.3 | DONE | Added hydrateFromSaved() and runSave() create/update continuity flow with savedProjectId synchronization.`
+- `2026-04-28 | ShortsPage | 6.1 | DONE | Added /studio/shorts SSR list page and app/shorts/shorts-list-client.tsx for project listing and creation entry.`
+- `2026-04-28 | ShortsPage | 6.2 | DONE | Added shared shorts journey UI (wizard + client wrapper) and wired /studio/shorts/new and /studio/shorts/[id]/edit routes.`
+- `2026-04-28 | ShortsPage | 6.3 | DONE | Added /studio/shorts/[id] detail page and app/shorts/shorts-detail-client.tsx with source and candidate summaries.`
