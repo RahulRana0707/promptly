@@ -10,7 +10,7 @@ import {
   isSupportedSourceUrl,
   logShortsApiEvent,
 } from "@/lib/shorts/policy";
-import type { TranscriptSegment } from "@/lib/types/shorts-draft";
+import { fetchYouTubeTranscript } from "@/lib/shorts/youtube-transcript";
 import { normalizeSavedShortsData } from "@/lib/types/saved-shorts";
 
 export const dynamic = "force-dynamic";
@@ -23,30 +23,6 @@ function dbUnavailableResponse() {
     },
     { status: 503 }
   );
-}
-
-function buildMockTranscript(seedText: string): TranscriptSegment[] {
-  const base = seedText.trim() || "Podcast conversation about practical growth strategies.";
-  const lines = [
-    "Most creators over-optimize tools instead of mastering audience psychology.",
-    "The first 30 seconds decide whether viewers keep watching or skip.",
-    "A simple contrarian point often outperforms generic advice.",
-    "Stories with clear tension and payoff drive stronger completion rates.",
-    "Actionable one-step takeaways usually produce higher shares and saves.",
-    "Consistency beats intensity when you are compounding distribution over time.",
-  ];
-
-  return lines.map((line, index) => {
-    const startSec = index * 35;
-    const endSec = startSec + 30;
-    return {
-      id: `segment-${index + 1}`,
-      startSec,
-      endSec,
-      speaker: index % 2 === 0 ? "Host" : "Guest",
-      text: `${line} ${index === 0 ? base : ""}`.trim(),
-    };
-  });
 }
 
 export async function POST(
@@ -100,14 +76,27 @@ export async function POST(
     }
 
     const shouldReuse = !force && data.transcript.length > 0;
-    const transcript = shouldReuse
-      ? data.transcript
-      : buildMockTranscript(data.sourceTitle || data.sourceUrl);
+    let transcript = data.transcript;
+    let language = data.language || "en";
+    if (!shouldReuse) {
+      try {
+        const fetched = await fetchYouTubeTranscript(data.sourceUrl);
+        transcript = fetched.segments;
+        language = fetched.language;
+      } catch (e) {
+        const message =
+          e instanceof Error ? e.message : "Could not transcribe the provided video URL.";
+        return NextResponse.json(
+          { error: message, code: "TRANSCRIPT_UNAVAILABLE" },
+          { status: 422 }
+        );
+      }
+    }
 
     const nextData = normalizeSavedShortsData({
       ...data,
       transcript,
-      language: data.language || "en",
+      language,
       projectStatus: "transcribing",
       wizardStep: "transcript",
       error: "",
