@@ -5,6 +5,7 @@ import {
   getShortsProjectForUser,
   updateShortsProjectForUser,
 } from "@/lib/db/shorts";
+import { consumeShortsQuota, logShortsApiEvent } from "@/lib/shorts/policy";
 import type { CaptionStyleId, RenderJob, RenderPreset } from "@/lib/types/shorts-draft";
 import { normalizeSavedShortsData } from "@/lib/types/saved-shorts";
 
@@ -41,6 +42,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const userId = getPlaceholderUserId();
   if (!id) {
     return NextResponse.json({ error: "Missing project id" }, { status: 400 });
   }
@@ -67,6 +69,15 @@ export async function POST(
   if (!candidateIds.length) {
     return NextResponse.json({ error: "Missing candidateIds" }, { status: 400 });
   }
+  if (candidateIds.length > 10) {
+    return NextResponse.json(
+      {
+        error: "Render request exceeds clip limit (max 10 per run).",
+        code: "QUOTA_EXCEEDED",
+      },
+      { status: 429 }
+    );
+  }
   const candidateRangesRaw =
     (body as { candidateRanges?: unknown }).candidateRanges &&
     typeof (body as { candidateRanges?: unknown }).candidateRanges === "object" &&
@@ -75,9 +86,20 @@ export async function POST(
       : {};
 
   try {
-    const project = await getShortsProjectForUser(getPlaceholderUserId(), id);
+    const project = await getShortsProjectForUser(userId, id);
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+    const quota = consumeShortsQuota({ userId, action: "render" });
+    if (!quota.ok) {
+      return NextResponse.json(
+        {
+          error: "Render quota exceeded. Try again later.",
+          code: "QUOTA_EXCEEDED",
+          retryAfterSec: quota.retryAfterSec,
+        },
+        { status: 429 }
+      );
     }
 
     const data = normalizeSavedShortsData(project.data);
@@ -135,10 +157,17 @@ export async function POST(
       error: "",
     });
 
-    const ok = await updateShortsProjectForUser(getPlaceholderUserId(), id, nextData);
+    const ok = await updateShortsProjectForUser(userId, id, nextData);
     if (!ok) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
+    logShortsApiEvent({
+      route: "projects/[id]/render",
+      stage: "render_queued",
+      projectId: id,
+      userId,
+      detail: `jobs=${jobs.length}`,
+    });
 
     const responseJobs = jobs.map((job) => ({
       id: `${id}--${job.id}`,
@@ -146,6 +175,13 @@ export async function POST(
     }));
     return NextResponse.json({ jobs: responseJobs });
   } catch {
+    logShortsApiEvent({
+      route: "projects/[id]/render",
+      stage: "render_failed",
+      projectId: id,
+      userId,
+      code: "SAVE_UNAVAILABLE",
+    });
     return dbUnavailableResponse();
   }
 }

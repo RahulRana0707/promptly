@@ -5,6 +5,7 @@ import {
   getShortsProjectForUser,
   updateShortsProjectForUser,
 } from "@/lib/db/shorts";
+import { consumeShortsQuota, logShortsApiEvent } from "@/lib/shorts/policy";
 import type { MomentCandidate, TranscriptSegment } from "@/lib/types/shorts-draft";
 import { normalizeSavedShortsData } from "@/lib/types/saved-shorts";
 
@@ -73,6 +74,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const userId = getPlaceholderUserId();
   if (!id) {
     return NextResponse.json({ error: "Missing project id" }, { status: 400 });
   }
@@ -102,9 +104,20 @@ export async function POST(
       : 80;
 
   try {
-    const project = await getShortsProjectForUser(getPlaceholderUserId(), id);
+    const project = await getShortsProjectForUser(userId, id);
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+    const quota = consumeShortsQuota({ userId, action: "analyze" });
+    if (!quota.ok) {
+      return NextResponse.json(
+        {
+          error: "Analysis quota exceeded. Try again later.",
+          code: "QUOTA_EXCEEDED",
+          retryAfterSec: quota.retryAfterSec,
+        },
+        { status: 429 }
+      );
     }
 
     const data = normalizeSavedShortsData(project.data);
@@ -132,13 +145,27 @@ export async function POST(
       error: "",
     });
 
-    const ok = await updateShortsProjectForUser(getPlaceholderUserId(), id, nextData);
+    const ok = await updateShortsProjectForUser(userId, id, nextData);
     if (!ok) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
+    logShortsApiEvent({
+      route: "projects/[id]/analyze",
+      stage: "analyze_success",
+      projectId: id,
+      userId,
+      detail: `candidates=${nextData.candidates.length}`,
+    });
 
     return NextResponse.json({ candidates: nextData.candidates });
   } catch {
+    logShortsApiEvent({
+      route: "projects/[id]/analyze",
+      stage: "analyze_failed",
+      projectId: id,
+      userId,
+      code: "SAVE_UNAVAILABLE",
+    });
     return dbUnavailableResponse();
   }
 }

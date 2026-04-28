@@ -144,15 +144,15 @@ Conventions: `[ ]` todo · `[-]` doing · `[x]` done · Route family: `/studio/s
 
 ## Phase 9 - Ops hardening and policy guardrails
 
-- [ ] **9.1** Add source validation and quota checks
+- [x] **9.1** Add source validation and quota checks
   - **Do:** enforce supported sources and rate limits for expensive jobs.
   - **Verify:** blocked requests return explicit error codes/messages.
 
-- [ ] **9.2** Add structured telemetry and job audit logs
+- [x] **9.2** Add structured telemetry and job audit logs
   - **Do:** log stage timings and failure reasons for ingest/transcribe/analyze/render.
   - **Verify:** failed jobs are diagnosable from logs.
 
-- [ ] **9.3** Add docs and progress updates
+- [x] **9.3** Add docs and progress updates
   - **Do:** keep `docs/shorts-page.md` and `docs/project-brain/routes.md` in sync.
   - **Verify:** append one DONE line per completed phase chunk.
 
@@ -188,3 +188,6 @@ Conventions: `[ ]` todo · `[-]` doing · `[x]` done · Route family: `/studio/s
 - `2026-04-28 | ShortsPage | 8.1 | DONE | Added render status refresh controls, per-job polling action, and in-card status visibility for queued/running/completed jobs.`
 - `2026-04-28 | ShortsPage | 8.2 | DONE | Added explicit refresh/loading/error handling in render workflow and surfaced per-job failures in UI.`
 - `2026-04-28 | ShortsPage | 8.3 | DONE | Added download-link resolution action per render job and wired download URLs into the download step UI.`
+- `2026-04-28 | ShortsPage | 9.1 | DONE | Added source host allowlist validation and per-user in-memory quotas for transcribe/analyze/render endpoints with QUOTA_EXCEEDED responses.`
+- `2026-04-28 | ShortsPage | 9.2 | DONE | Added structured shorts API telemetry logs for list/create/update/transcribe/analyze/render success and failure stages.`
+- `2026-04-28 | ShortsPage | 9.3 | DONE | Updated phase checklist and progress log through final hardening phase completion.`

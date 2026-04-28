@@ -5,6 +5,11 @@ import {
   getShortsProjectForUser,
   updateShortsProjectForUser,
 } from "@/lib/db/shorts";
+import {
+  consumeShortsQuota,
+  isSupportedSourceUrl,
+  logShortsApiEvent,
+} from "@/lib/shorts/policy";
 import type { TranscriptSegment } from "@/lib/types/shorts-draft";
 import { normalizeSavedShortsData } from "@/lib/types/saved-shorts";
 
@@ -49,6 +54,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const userId = getPlaceholderUserId();
   if (!id) {
     return NextResponse.json({ error: "Missing project id" }, { status: 400 });
   }
@@ -66,12 +72,33 @@ export async function POST(
       : false;
 
   try {
-    const project = await getShortsProjectForUser(getPlaceholderUserId(), id);
+    const project = await getShortsProjectForUser(userId, id);
     if (!project) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
     const data = normalizeSavedShortsData(project.data);
+    if (!isSupportedSourceUrl(data.sourceUrl)) {
+      return NextResponse.json(
+        {
+          error: "Unsupported source URL. Use a supported podcast/video host.",
+          code: "SOURCE_UNSUPPORTED",
+        },
+        { status: 422 }
+      );
+    }
+    const quota = consumeShortsQuota({ userId, action: "transcribe" });
+    if (!quota.ok) {
+      return NextResponse.json(
+        {
+          error: "Transcription quota exceeded. Try again later.",
+          code: "QUOTA_EXCEEDED",
+          retryAfterSec: quota.retryAfterSec,
+        },
+        { status: 429 }
+      );
+    }
+
     const shouldReuse = !force && data.transcript.length > 0;
     const transcript = shouldReuse
       ? data.transcript
@@ -86,10 +113,17 @@ export async function POST(
       error: "",
     });
 
-    const ok = await updateShortsProjectForUser(getPlaceholderUserId(), id, nextData);
+    const ok = await updateShortsProjectForUser(userId, id, nextData);
     if (!ok) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
+    logShortsApiEvent({
+      route: "projects/[id]/transcribe",
+      stage: "transcribe_success",
+      projectId: id,
+      userId,
+      detail: `segments=${nextData.transcript.length}`,
+    });
 
     return NextResponse.json({
       ok: true,
@@ -97,6 +131,13 @@ export async function POST(
       transcriptSegments: nextData.transcript.length,
     });
   } catch {
+    logShortsApiEvent({
+      route: "projects/[id]/transcribe",
+      stage: "transcribe_failed",
+      projectId: id,
+      userId,
+      code: "SAVE_UNAVAILABLE",
+    });
     return dbUnavailableResponse();
   }
 }
