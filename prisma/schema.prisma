@@ -37,3 +37,18 @@ model Article {
 
   @@index([userId, updatedAt(sort: Desc)])
 }
+
+/// Saved Shorts/Reels projects; `data` matches SavedShortsData (see lib/types/saved-shorts.ts).
+model ShortsProject {
+  id         String   @id @default(cuid())
+  userId     String
+  title      String
+  status     String
+  sourceUrl  String
+  sourceType String
+  data       Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId, updatedAt(sort: Desc)])
+}

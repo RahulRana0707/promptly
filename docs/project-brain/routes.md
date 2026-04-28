@@ -78,6 +78,31 @@ This file maps all app routes, what each page renders, and which features they t
 - Main render: article edit journey with preloaded data
 - APIs used: same generation APIs as article new flow + `PUT /api/articles/[id]`
 
+### `/studio/shorts`
+
+- File: `app/(studio)/studio/shorts/page.tsx`
+- Main render: shorts/reels project list and new project entry
+- APIs/data: reads shorts projects server-side (DB-aware)
+
+### `/studio/shorts/new`
+
+- File: `app/(studio)/studio/shorts/new/page.tsx`
+- Main render: shorts creation journey
+- Core feature: source -> transcript -> moments -> selection -> render -> download
+- APIs used: `/api/shorts/projects`, `/api/shorts/projects/[id]/transcribe`, `/api/shorts/projects/[id]/analyze`, `/api/shorts/projects/[id]/render`, `/api/shorts/renders/[renderId]`
+
+### `/studio/shorts/[id]`
+
+- File: `app/(studio)/studio/shorts/[id]/page.tsx`
+- Main render: shorts project detail for transcript, clip candidates, and render results
+- APIs/data: server load for shorts project by id
+
+### `/studio/shorts/[id]/edit`
+
+- File: `app/(studio)/studio/shorts/[id]/edit/page.tsx`
+- Main render: shorts journey in edit/resume mode with preloaded project data
+- APIs used: same processing APIs as shorts new flow + `PUT /api/shorts/projects/[id]`
+
 ## Route Group and Layout Notes
 
 - `(marketing)` and `(studio)` are Next.js route groups; they do not appear in URL paths.
@@ -95,3 +120,4 @@ From `next.config.ts`:
 - `/profile` -> `/studio/profile`
 - `/workspace` -> `/studio/compose`
 - `/articles` -> `/studio/articles`
+- `/shorts` -> `/studio/shorts`
