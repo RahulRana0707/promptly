@@ -75,14 +75,26 @@ export async function updateShortsProject(
 export async function transcribeShortsProject(
   id: string,
   input?: { force?: boolean }
-): Promise<{ ok: true; status: string; transcriptSegments: number }> {
+): Promise<{
+  ok: true;
+  status: string;
+  transcriptSegments: number;
+  transcript: SavedShortsData["transcript"];
+  language: string;
+}> {
   const res = await fetch(`/api/shorts/projects/${encodeURIComponent(id)}/transcribe`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input ?? {}),
   });
   if (!res.ok) throw new Error(await readErrorMessage(res));
-  return (await res.json()) as { ok: true; status: string; transcriptSegments: number };
+  return (await res.json()) as {
+    ok: true;
+    status: string;
+    transcriptSegments: number;
+    transcript: SavedShortsData["transcript"];
+    language: string;
+  };
 }
 
 export async function analyzeShortsProject(

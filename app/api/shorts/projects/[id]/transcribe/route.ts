@@ -15,6 +15,12 @@ import { normalizeSavedShortsData } from "@/lib/types/saved-shorts";
 
 export const dynamic = "force-dynamic";
 
+const LEGACY_MOCK_MARKERS = [
+  "Most creators over-optimize tools instead of mastering audience psychology.",
+  "The first 30 seconds decide whether viewers keep watching or skip.",
+  "A simple contrarian point often outperforms generic advice.",
+];
+
 function dbUnavailableResponse() {
   return NextResponse.json(
     {
@@ -23,6 +29,12 @@ function dbUnavailableResponse() {
     },
     { status: 503 }
   );
+}
+
+function isLegacyMockTranscript(transcript: Array<{ text: string }>): boolean {
+  if (!transcript.length) return false;
+  const combined = transcript.map((item) => item.text).join(" ");
+  return LEGACY_MOCK_MARKERS.every((marker) => combined.includes(marker));
 }
 
 export async function POST(
@@ -75,7 +87,8 @@ export async function POST(
       );
     }
 
-    const shouldReuse = !force && data.transcript.length > 0;
+    const shouldReuse =
+      !force && data.transcript.length > 0 && !isLegacyMockTranscript(data.transcript);
     let transcript = data.transcript;
     let language = data.language || "en";
     if (!shouldReuse) {
@@ -118,6 +131,8 @@ export async function POST(
       ok: true,
       status: "transcribing",
       transcriptSegments: nextData.transcript.length,
+      transcript: nextData.transcript,
+      language: nextData.language,
     });
   } catch {
     logShortsApiEvent({

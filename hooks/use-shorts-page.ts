@@ -116,7 +116,9 @@ export function useShortsPage() {
     setLoadingTranscribe(true);
     setError(null);
     try {
-      await transcribeShortsProject(savedProjectId, input);
+      const result = await transcribeShortsProject(savedProjectId, input);
+      setTranscript(result.transcript);
+      setLanguage(result.language || "en");
       setProjectStatus("transcribing");
       setWizardStep("transcript");
     } catch (e) {
