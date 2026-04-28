@@ -29,6 +29,12 @@ type Props = {
 };
 
 export function ShortsJourneyWizard({ state, onSaveProject }: Props) {
+  function badgeForScore(score: number) {
+    if (score >= 90) return "Breakout";
+    if (score >= 80) return "High reach";
+    return "Backup";
+  }
+
   async function saveNow() {
     const id = await state.runSave();
     if (id) onSaveProject(id);
@@ -186,9 +192,14 @@ export function ShortsJourneyWizard({ state, onSaveProject }: Props) {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-medium">{candidate.title}</p>
-                      <span className="text-xs text-muted-foreground">
-                        Score {candidate.score}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                          {badgeForScore(candidate.score)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          Score {candidate.score}
+                        </span>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {candidate.startSec}s - {candidate.endSec}s
@@ -230,18 +241,7 @@ export function ShortsJourneyWizard({ state, onSaveProject }: Props) {
                         type="checkbox"
                         checked={checked}
                         onChange={(e) => {
-                          if (e.target.checked) {
-                            state.setSelectedCandidateIds([
-                              ...state.selectedCandidateIds,
-                              candidate.id,
-                            ]);
-                            return;
-                          }
-                          state.setSelectedCandidateIds(
-                            state.selectedCandidateIds.filter(
-                              (id) => id !== candidate.id,
-                            ),
-                          );
+                          state.toggleCandidateSelection(candidate.id, e.target.checked);
                         }}
                       />
                       {candidate.title} (score {candidate.score})
@@ -254,6 +254,43 @@ export function ShortsJourneyWizard({ state, onSaveProject }: Props) {
                 </p>
               )}
             </div>
+
+            {state.selectedCandidateIds.length ? (
+              <div className="space-y-2 rounded-lg border border-border/70 p-3">
+                <p className="text-sm font-medium">Manual clip trims</p>
+                {state.candidates
+                  .filter((candidate) => state.selectedCandidateIds.includes(candidate.id))
+                  .map((candidate) => (
+                    <div key={candidate.id} className="grid gap-2 md:grid-cols-3">
+                      <p className="text-sm">{candidate.title}</p>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={candidate.startSec}
+                        onChange={(e) =>
+                          state.updateCandidateTrim(
+                            candidate.id,
+                            Number(e.target.value),
+                            candidate.endSec
+                          )
+                        }
+                      />
+                      <Input
+                        type="number"
+                        min={1}
+                        value={candidate.endSec}
+                        onChange={(e) =>
+                          state.updateCandidateTrim(
+                            candidate.id,
+                            candidate.startSec,
+                            Number(e.target.value)
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+              </div>
+            ) : null}
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1">
@@ -307,13 +344,23 @@ export function ShortsJourneyWizard({ state, onSaveProject }: Props) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button
-              type="button"
-              onClick={() => void state.runRender()}
-              disabled={state.loadingRender}
-            >
-              {state.loadingRender ? "Queueing..." : "Start render"}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                onClick={() => void state.runRender()}
+                disabled={state.loadingRender}
+              >
+                {state.loadingRender ? "Queueing..." : "Start render"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void state.refreshRenderStatuses()}
+                disabled={state.refreshingRenders || !state.renderJobs.length}
+              >
+                {state.refreshingRenders ? "Refreshing..." : "Refresh status"}
+              </Button>
+            </div>
             <div className="space-y-2">
               {state.renderJobs.length ? (
                 state.renderJobs.map((job) => (
@@ -325,6 +372,20 @@ export function ShortsJourneyWizard({ state, onSaveProject }: Props) {
                     <p className="text-xs text-muted-foreground">
                       {job.status}
                     </p>
+                    {job.status !== "completed" ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="mt-2"
+                        onClick={() => void state.pollRenderJob(job.id)}
+                      >
+                        Check this job
+                      </Button>
+                    ) : null}
+                    {job.error ? (
+                      <p className="mt-2 text-xs text-destructive">{job.error}</p>
+                    ) : null}
                   </div>
                 ))
               ) : (
@@ -361,9 +422,19 @@ export function ShortsJourneyWizard({ state, onSaveProject }: Props) {
                       Download clip
                     </a>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
-                      Render output pending.
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        Render output pending.
+                      </p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void state.resolveDownloadForJob(job.id)}
+                      >
+                        Fetch download link
+                      </Button>
+                    </div>
                   )}
                 </div>
               ))

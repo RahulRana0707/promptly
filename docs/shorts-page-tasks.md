@@ -112,15 +112,15 @@ Conventions: `[ ]` todo · `[-]` doing · `[x]` done · Route family: `/studio/s
 
 ## Phase 7 - Moment analysis UX and quality controls
 
-- [ ] **7.1** Add ranked candidates table/cards
+- [x] **7.1** Add ranked candidates table/cards
   - **Do:** show score, reason, start/end, duration, and tags.
   - **Verify:** high-reach (80+) badge and sorting work.
 
-- [ ] **7.2** Add overlap pruning and selection constraints
+- [x] **7.2** Add overlap pruning and selection constraints
   - **Do:** prevent near-duplicate windows from being selected blindly.
   - **Verify:** conflicting selections surface clear UI guidance.
 
-- [ ] **7.3** Add manual trim override
+- [x] **7.3** Add manual trim override
   - **Do:** allow small start/end adjustments before rendering.
   - **Verify:** trims persist and are used in render payload.
 
@@ -128,15 +128,15 @@ Conventions: `[ ]` todo · `[-]` doing · `[x]` done · Route family: `/studio/s
 
 ## Phase 8 - Render UX, reliability, and error states
 
-- [ ] **8.1** Add render progress panel
+- [x] **8.1** Add render progress panel
   - **Do:** show queued/running/completed/failed state per selected clip.
   - **Verify:** polling updates status without page refresh.
 
-- [ ] **8.2** Add explicit empty/loading/error handling
+- [x] **8.2** Add explicit empty/loading/error handling
   - **Do:** cover each async stage with visible actionable UI states.
   - **Verify:** no silent failures.
 
-- [ ] **8.3** Add downloadable outputs section
+- [x] **8.3** Add downloadable outputs section
   - **Do:** provide mp4 links and optional subtitle downloads when available.
   - **Verify:** downloaded outputs open correctly.
 
@@ -182,3 +182,9 @@ Conventions: `[ ]` todo · `[-]` doing · `[x]` done · Route family: `/studio/s
 - `2026-04-28 | ShortsPage | 6.1 | DONE | Added /studio/shorts SSR list page and app/shorts/shorts-list-client.tsx for project listing and creation entry.`
 - `2026-04-28 | ShortsPage | 6.2 | DONE | Added shared shorts journey UI (wizard + client wrapper) and wired /studio/shorts/new and /studio/shorts/[id]/edit routes.`
 - `2026-04-28 | ShortsPage | 6.3 | DONE | Added /studio/shorts/[id] detail page and app/shorts/shorts-detail-client.tsx with source and candidate summaries.`
+- `2026-04-28 | ShortsPage | 7.1 | DONE | Added candidate score-band badges in moments and selection views to highlight high-reach clips.`
+- `2026-04-28 | ShortsPage | 7.2 | DONE | Added overlap guardrail in selection flow to prevent conflicting clip windows from being selected together.`
+- `2026-04-28 | ShortsPage | 7.3 | DONE | Added manual trim controls for selected clips and passed candidate range overrides through render requests.`
+- `2026-04-28 | ShortsPage | 8.1 | DONE | Added render status refresh controls, per-job polling action, and in-card status visibility for queued/running/completed jobs.`
+- `2026-04-28 | ShortsPage | 8.2 | DONE | Added explicit refresh/loading/error handling in render workflow and surfaced per-job failures in UI.`
+- `2026-04-28 | ShortsPage | 8.3 | DONE | Added download-link resolution action per render job and wired download URLs into the download step UI.`

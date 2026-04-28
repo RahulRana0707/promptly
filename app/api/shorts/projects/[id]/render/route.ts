@@ -67,6 +67,12 @@ export async function POST(
   if (!candidateIds.length) {
     return NextResponse.json({ error: "Missing candidateIds" }, { status: 400 });
   }
+  const candidateRangesRaw =
+    (body as { candidateRanges?: unknown }).candidateRanges &&
+    typeof (body as { candidateRanges?: unknown }).candidateRanges === "object" &&
+    !Array.isArray((body as { candidateRanges?: unknown }).candidateRanges)
+      ? ((body as { candidateRanges: Record<string, unknown> }).candidateRanges ?? {})
+      : {};
 
   try {
     const project = await getShortsProjectForUser(getPlaceholderUserId(), id);
@@ -85,6 +91,29 @@ export async function POST(
     }
 
     const preset = normalizePreset((body as { preset?: unknown }).preset);
+    const candidateRanges = new Map<string, { startSec: number; endSec: number }>();
+    for (const candidateId of candidateIds) {
+      const rangeRaw = candidateRangesRaw[candidateId];
+      if (!rangeRaw || typeof rangeRaw !== "object" || Array.isArray(rangeRaw)) continue;
+      const o = rangeRaw as { startSec?: unknown; endSec?: unknown };
+      const startSec =
+        typeof o.startSec === "number" && Number.isFinite(o.startSec)
+          ? Math.max(0, Math.floor(o.startSec))
+          : null;
+      const endSec =
+        typeof o.endSec === "number" && Number.isFinite(o.endSec)
+          ? Math.max(0, Math.floor(o.endSec))
+          : null;
+      if (startSec === null || endSec === null || endSec <= startSec) continue;
+      candidateRanges.set(candidateId, { startSec, endSec });
+    }
+
+    const nextCandidates = data.candidates.map((candidate) => {
+      const range = candidateRanges.get(candidate.id);
+      if (!range) return candidate;
+      return { ...candidate, startSec: range.startSec, endSec: range.endSec };
+    });
+
     const jobs: RenderJob[] = candidateIds.map((candidateId, index) => ({
       id: `job-${Date.now()}-${index + 1}`,
       candidateId,
@@ -97,6 +126,7 @@ export async function POST(
 
     const nextData = normalizeSavedShortsData({
       ...data,
+      candidates: nextCandidates,
       selectedCandidateIds: candidateIds,
       renderPreset: preset,
       renderJobs: jobs,

@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   analyzeShortsProject,
   createShortsProject,
+  fetchRenderDownload,
   fetchRenderStatus,
   renderShortsProject,
   transcribeShortsProject,
@@ -41,8 +42,16 @@ export function useShortsPage() {
   const [loadingTranscribe, setLoadingTranscribe] = useState(false);
   const [loadingAnalyze, setLoadingAnalyze] = useState(false);
   const [loadingRender, setLoadingRender] = useState(false);
+  const [refreshingRenders, setRefreshingRenders] = useState(false);
   const [savingProject, setSavingProject] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function windowsOverlap(
+    a: { startSec: number; endSec: number },
+    b: { startSec: number; endSec: number }
+  ): boolean {
+    return Math.max(a.startSec, b.startSec) < Math.min(a.endSec, b.endSec);
+  }
 
   function serializeForSave(): SavedShortsData {
     return normalizeSavedShortsData({
@@ -149,15 +158,24 @@ export function useShortsPage() {
     setLoadingRender(true);
     setError(null);
     try {
+      const rangeMap = Object.fromEntries(
+        candidates
+          .filter((candidate) => selectedCandidateIds.includes(candidate.id))
+          .map((candidate) => [
+            candidate.id,
+            { startSec: candidate.startSec, endSec: candidate.endSec },
+          ])
+      );
       const result = await renderShortsProject({
         id: savedProjectId,
         candidateIds: selectedCandidateIds,
+        candidateRanges: rangeMap,
         preset: renderPreset,
       });
       setRenderJobs(
-        result.jobs.map((job) => ({
-          id: job.id.replace(`${savedProjectId}--`, ""),
-          candidateId: "",
+        result.jobs.map((job, index) => ({
+          id: job.id,
+          candidateId: selectedCandidateIds[index] ?? "",
           status: job.status === "running" ? "running" : "queued",
           outputUrl: "",
           subtitleUrl: "",
@@ -174,16 +192,112 @@ export function useShortsPage() {
     }
   }
 
+  function toggleCandidateSelection(candidateId: string, checked: boolean) {
+    setError(null);
+    if (!checked) {
+      setSelectedCandidateIds((prev) => prev.filter((id) => id !== candidateId));
+      return;
+    }
+
+    const candidate = candidates.find((item) => item.id === candidateId);
+    if (!candidate) return;
+
+    const conflict = candidates.find((item) => {
+      if (!selectedCandidateIds.includes(item.id)) return false;
+      return windowsOverlap(candidate, item);
+    });
+    if (conflict) {
+      setError(`Selection overlaps with "${conflict.title}". Adjust trims or deselect it first.`);
+      return;
+    }
+
+    setSelectedCandidateIds((prev) => [...prev, candidateId]);
+  }
+
+  function updateCandidateTrim(candidateId: string, startSec: number, endSec: number) {
+    setCandidates((prev) =>
+      prev.map((candidate) => {
+        if (candidate.id !== candidateId) return candidate;
+        const clampedStart = Math.max(0, Math.floor(startSec));
+        const clampedEnd = Math.max(clampedStart + 1, Math.floor(endSec));
+        return { ...candidate, startSec: clampedStart, endSec: clampedEnd };
+      })
+    );
+  }
+
   async function pollRenderJob(renderId: string) {
     setError(null);
     try {
       const status = await fetchRenderStatus(renderId);
-      if (status.status === "completed") {
-        setWizardStep("download");
+      setRenderJobs((prev) =>
+        prev.map((job) =>
+          job.id === renderId
+            ? {
+                ...job,
+                status:
+                  status.status === "completed"
+                    ? "completed"
+                    : status.status === "failed"
+                      ? "failed"
+                      : status.status === "running"
+                        ? "running"
+                        : "queued",
+                outputUrl: status.outputUrl,
+                subtitleUrl: status.subtitleUrl,
+                thumbnailUrl: status.thumbnailUrl,
+                error: status.error,
+              }
+            : job
+        )
+      );
+      if (status.status === "failed") {
+        setError(status.error || "Render job failed");
       }
       return status;
     } catch (e) {
       const message = e instanceof Error ? e.message : "Could not fetch render status";
+      setError(message);
+      return null;
+    }
+  }
+
+  async function refreshRenderStatuses() {
+    if (!renderJobs.length) return;
+    setRefreshingRenders(true);
+    setError(null);
+    try {
+      const statuses = await Promise.all(renderJobs.map((job) => pollRenderJob(job.id)));
+      const latestStatuses = statuses.filter((item): item is NonNullable<typeof item> => item !== null);
+      if (latestStatuses.length && latestStatuses.every((item) => item.status === "completed")) {
+        setWizardStep("download");
+        setProjectStatus("completed");
+      }
+    } finally {
+      setRefreshingRenders(false);
+    }
+  }
+
+  async function resolveDownloadForJob(renderId: string) {
+    setError(null);
+    try {
+      const download = await fetchRenderDownload(renderId);
+      setRenderJobs((prev) =>
+        prev.map((job) =>
+          job.id === renderId
+            ? {
+                ...job,
+                outputUrl: download.downloadUrl,
+                subtitleUrl: download.subtitleUrl,
+                thumbnailUrl: download.thumbnailUrl,
+                status: "completed",
+              }
+            : job
+        )
+      );
+      setWizardStep("download");
+      return download;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Could not resolve download URL";
       setError(message);
       return null;
     }
@@ -208,6 +322,8 @@ export function useShortsPage() {
     setCandidates,
     selectedCandidateIds,
     setSelectedCandidateIds,
+    toggleCandidateSelection,
+    updateCandidateTrim,
     renderPreset,
     setRenderPreset,
     renderJobs,
@@ -218,6 +334,7 @@ export function useShortsPage() {
     loadingTranscribe,
     loadingAnalyze,
     loadingRender,
+    refreshingRenders,
     savingProject,
     error,
     serializeForSave,
@@ -227,5 +344,7 @@ export function useShortsPage() {
     runAnalyze,
     runRender,
     pollRenderJob,
+    refreshRenderStatuses,
+    resolveDownloadForJob,
   };
 }

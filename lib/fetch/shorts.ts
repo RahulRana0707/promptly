@@ -101,6 +101,7 @@ export async function analyzeShortsProject(
 export async function renderShortsProject(input: {
   id: string;
   candidateIds: string[];
+  candidateRanges?: Record<string, { startSec: number; endSec: number }>;
   preset: RenderPreset;
 }): Promise<{ jobs: Array<{ id: string; status: string }> }> {
   const res = await fetch(`/api/shorts/projects/${encodeURIComponent(input.id)}/render`, {
@@ -108,6 +109,7 @@ export async function renderShortsProject(input: {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       candidateIds: input.candidateIds,
+      candidateRanges: input.candidateRanges ?? {},
       preset: input.preset,
     }),
   });
