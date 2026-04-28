@@ -80,15 +80,15 @@ Conventions: `[ ]` todo · `[-]` doing · `[x]` done · Route family: `/studio/s
 
 ## Phase 5 - Fetch wrappers and state orchestration
 
-- [ ] **5.1** Add `lib/fetch/shorts.ts`
+- [x] **5.1** Add `lib/fetch/shorts.ts`
   - **Do:** typed wrappers for shorts list/detail/create/transcribe/analyze/render/status/download.
   - **Verify:** wrappers throw normalized errors from API responses.
 
-- [ ] **5.2** Add `hooks/use-shorts-page.ts`
+- [x] **5.2** Add `hooks/use-shorts-page.ts`
   - **Do:** own source/transcript/moments/selection/render states and async lifecycle actions.
   - **Verify:** step transitions remain deterministic after retries.
 
-- [ ] **5.3** Add hydration and save/update continuity
+- [x] **5.3** Add hydration and save/update continuity
   - **Do:** support edit mode hydration and keep `savedProjectId` synchronized.
   - **Verify:** refresh/edit resumes previous journey state.
 
@@ -176,3 +176,6 @@ Conventions: `[ ]` todo · `[-]` doing · `[x]` done · Route family: `/studio/s
 - `2026-04-28 | ShortsPage | 4.2 | DONE | Added POST /api/shorts/projects/[id]/analyze with ranked candidate generation, score filtering, and ready_for_selection state update.`
 - `2026-04-28 | ShortsPage | 4.3 | DONE | Added POST /api/shorts/projects/[id]/render with candidate validation, render preset persistence, and queued render jobs.`
 - `2026-04-28 | ShortsPage | 4.4 | DONE | Added render polling and download endpoints under /api/shorts/renders/[renderId] and /download with completion gating.`
+- `2026-04-28 | ShortsPage | 5.1 | DONE | Added lib/fetch/shorts.ts with typed wrappers for shorts CRUD, transcribe, analyze, render, status, and download endpoints.`
+- `2026-04-28 | ShortsPage | 5.2 | DONE | Added hooks/use-shorts-page.ts to centralize shorts journey state and async action lifecycle handlers.`
+- `2026-04-28 | ShortsPage | 5.3 | DONE | Added hydrateFromSaved() and runSave() create/update continuity flow with savedProjectId synchronization.`
